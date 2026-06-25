@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ログイン</title>
+</head>
+<body>
+
+<h2>ログイン</h2>
+
+<input id="username" placeholder="ユーザー名"/>
+<br><br>
+
+<input id="password" type="password" placeholder="パスワード"/>
+<br><br>
+
+<button onclick="login()">ログイン</button>
+
+<p id="result"></p>
+
+<script>
+    async function login() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const result = document.getElementById("result");
+            if (!username || !password) {
+            result.innerText = "ユーザー名とパスワードを入力してください";
+            result.style.color = "red";
+            return;
+            }
+
+            const response = await fetch("http://localhost:8080/auth/login", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ username, password })
+            });
+            const text = await response.text();
+
+            if (!response.ok) {
+            result.innerText = text || "ログイン失敗";
+            result.style.color = "red";
+            return;
+            }
+            console.log("JWT =", text);
+            localStorage.setItem("token", text);
+
+            console.log(
+                "SAVED TOKEN =",
+                localStorage.getItem("token")
+            );
+                result.innerText = "ログインに成功しました！";
+                result.style.color = "green";
+                await getProfile();
+                window.location.href = "/index.html";
+        }
+        async function getProfile() {
+            const token = localStorage.getItem("token");
+
+            const response = await fetch("http://localhost:8080/user/profile", {
+                method: "GET",
+                headers: {
+                    "Authorization": "Bearer " + token
+                }
+            });
+
+            if (!response.ok) {
+                const text = await response.text();
+                console.log("ERROR:", response.status, text);
+                return;
+            }
+
+            const data = await response.json();
+            console.log("PROFILE:", data);
+        }
+</script>
+</body>
+</html>
