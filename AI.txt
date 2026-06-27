@@ -79247,3 +79247,114 @@ Nếu endpoint là permitAll() → cho phép truy cập.
 Nếu endpoint yêu cầu xác thực (authenticated()) → trả về 401 Unauthorized thông qua AuthenticationEntryPoint.
 
 Đây là cách hoạt động chuẩn của OncePerRequestFilter trong Spring Security.
+==
+cách đẩy codelên github private
+
+Để đẩy code lên GitHub private repository, bạn làm theo các bước sau:
+
+1. Tạo repo private trên GitHub
+Vào GitHub: https://github.com
+
+Nhấn New repository
+
+Đặt tên repo
+
+Chọn Private
+
+Nhấn Create repository
+
+2. Mở terminal trong thư mục project
+cd duong-dan-toi-project
+3. Khởi tạo git (nếu chưa có)
+git init
+4. Thêm remote GitHub
+Lấy link repo (HTTPS), ví dụ:
+
+https://github.com/username/ten-repo.git
+Rồi chạy:
+
+git remote add origin https://github.com/username/ten-repo.git
+5. Add và commit code
+git add .
+git commit -m "first commit"
+6. Push lên GitHub
+Nếu là branch main:
+
+git branch -M main
+git push -u origin main
+7. Đăng nhập GitHub (nếu yêu cầu)
+Dùng token thay cho password (GitHub đã bỏ password login qua git)
+
+Tạo token tại: Settings → Developer settings → Personal access tokens
+
+Lần sau update code:
+git add .
+git commit -m "update"
+git push
+Nếu bạn muốn, mình có thể hướng dẫn luôn cách:
+
+dùng SSH cho GitHub (đỡ nhập token)
+
+fix lỗi “remote origin already exists”
+
+hoặc workflow Git chuẩn cho dự án (branch, pull request)
+
+Chỉ cần nói 👍
+
+
+$ git push -u origin main
+remote: Invalid username or token. Password authentication is not supported for
+Git operations.
+fatal: Authentication failed for
+
+Lỗi này xảy ra vì GitHub đã bỏ hỗ trợ đăng nhập bằng password khi dùng Git (HTTPS). Bây giờ bạn phải dùng Personal Access Token (PAT) hoặc SSH.
+
+Cách sửa nhanh nhất (khuyên dùng): dùng Token
+Bước 1: Tạo Personal Access Token
+Vào:
+https://github.com/settings/tokens
+
+Chọn:
+
+Developer settings → Personal access tokens → Tokens (classic)
+
+Generate new token
+
+Chọn quyền:
+
+✔ repo (bắt buộc)
+
+Nhấn Generate → copy token (rất quan trọng, chỉ hiện 1 lần)
+
+Bước 2: Push lại code
+Chạy lại:
+
+git push -u origin main
+Khi hỏi:
+
+Username: nhập GitHub username
+
+Password: dán TOKEN (không phải mật khẩu)
+
+Nếu bị lưu sai password trước đó (rất hay gặp)
+Windows:
+Mở Credential Manager → xóa GitHub credentials
+
+Hoặc chạy:
+git credential reject https://github.com
+Cách tốt hơn (khuyên dùng lâu dài): SSH
+Nếu bạn muốn khỏi nhập token mỗi lần push, mình có thể hướng dẫn setup SSH key:
+
+ssh-keygen
+
+add key lên GitHub
+
+đổi remote sang SSH
+
+Nếu vẫn lỗi, gửi mình:
+ảnh lỗi đầy đủ
+
+hoặc output của:
+
+git remote -v
+mình sẽ debug giúp bạn nhanh hơn 👍
