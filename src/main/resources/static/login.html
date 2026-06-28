@@ -54,7 +54,8 @@
                 result.innerText = "ログインに成功しました！";
                 result.style.color = "green";
                 await getProfile();
-                window.location.href = "/index.html";
+                //window.location.href = "/index.html";
+                window.location.href = "/";
         }
         async function getProfile() {
             const token = localStorage.getItem("token");
