@@ -1,0 +1,114 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    background-color: #f4f6f9;
+}
+
+h2 {
+    color: #333;
+}
+
+input {
+    padding: 8px;
+    margin: 5px;
+    border: 2px solid #ccc;
+    border-radius: 5px;
+    width: 210px;
+}
+
+button {
+    padding: 8px 14px;
+    border: none;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+li {
+    background: white;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.error {
+        color: red;
+        font-size: 14px;
+        margin-top: 4px;
+}
+
+.success {
+        border: 2px solid green;
+}
+
+.message {
+        color: red;
+        font-size: 14px;
+        margin-left: 10px;
+        min-width: 150px;
+}
+
+.form-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    box-shadow:0 4px 12px rgba(0,0,0,0.08);
+}
+
+thead{
+  background:#2563eb;
+  color:white;
+}
+
+th, td{
+  padding:16px 20px;
+  text-align:left;
+}
+
+tbody tr:hover{
+  background:#f9fafb;
+}
+
+.id-col {
+    width: 40px;
+    text-align: center;
+}
+
+.id-col2 {
+    width: 450px;
+    text-align: center;
+}
+
+.id-col3{
+    text-align: center;
+}
+
+.id-col4{
+    text-align: center;
+}
+
+.id-col5 {
+    width: 114px;
+    text-align: center;
+}
+
+.edit-name{
+    width: 350px;
+}

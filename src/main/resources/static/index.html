@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <script src="config.js"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        html {
+            visibility: hidden;
+        }
+    </style>
+</head>
+<body>
+<div id="loading">Loading...</div>
+<div id="app" style="display:none;">
+    <h2>商品CRUD</h2>
+    <h3>商品</h3>
+    <button onclick="getProducts()">商品一覧</button>
+    <button onclick="showCreateRow()">作成</button>
+    <button onclick="logout()">ログアウト</button>
+    <table id="table" style="display:none">
+        <thead>
+        <tr>
+            <th class="id-col">ID</th>
+            <th class="id-col2">商品名</th>
+            <th class="id-col3">価格</th>
+            <th class="id-col4">在庫数</th>
+            <th class="id-col5">操作</th>
+        </tr>
+        </thead>
+        <tbody id="tbody">
+        </tbody>
+    </table>
+</div>
+<!--<script>-->
+<script>
+    (async function () {
+
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+        window.location.replace("/login.html");
+        return;
+    }
+console.log("START");
+console.log("TOKEN =", token);
+    try {
+        console.log("BEFORE FETCH");
+        // const res = await fetch("http://localhost:8080/user/profile", {
+        // const res = await fetch("https://miniec-1.onrender.com/user/profile", {
+        const res = await fetch(`${API_URL}/user/profile`, {
+
+            headers: {
+                Authorization: "Bearer " + token
+            }
+        });
+        console.log("AFTER FETCH", res.status);
+
+        if (!res.ok) {
+            console.log("NOT OK → redirect");
+            localStorage.removeItem("token");
+            window.location.replace("/login.html");
+            return;
+        }
+        console.log("SHOW UI");
+
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("app").style.display = "block";
+
+        document.title = "商品CRUD";
+        document.documentElement.style.visibility = "visible";
+    } catch (e) {
+        console.error("CATCH ERROR:", e);
+        localStorage.removeItem("token");
+        window.location.replace("/login.html");
+    }
+})();
+        // const API = "http://localhost:8080/products";
+        // const API = "https://miniec-1.onrender.com/products";
+        // const API = "${API_URL}/products";
+
+        // const API = `${API_URL}/products`;
+        const API = API_URL + "/products";
+
+        let editingRow = null;
+//READ
+    function getProducts() {
+        console.count("getProducts called");
+            fetch(API)
+                .then(res => res.json())
+                .then(data => {
+                    console.log(data);
+                    const table = document.getElementById("table");
+                    const tbody = document.querySelector("tbody");
+                    let tableHTML = "";
+                    tbody.innerHTML = "";
+                    data.forEach(p => {
+                    tableHTML += `
+                        <tr data-id="${p.id}">
+                          <td class="id-cell">${p.id}</td>
+                          <td class="name-cell">${p.name}</td>
+                          <td class="price-cell">${p.price}</td>
+                          <td class="stock-cell">${p.stock}</td>
+                          <td>
+                            <button onclick="editRow(this)">更新</button>
+                            <button onclick="updateProduct(this)" style="display:none;">保存</button>
+                            <button onclick="cancelEdit(this)" style="display:none;">キャンセル</button>
+                            <button onclick="deleteProduct(this)">削除</button>
+                          </td>
+                        </tr>
+                      `;
+                    });
+                    tbody.innerHTML = tableHTML;
+                    table.style.display = "table";
+                });
+              }
+//UPDATE
+    function updateProduct(btn) {
+        const row = btn.closest("tr");
+        if (!validate(row)) return;
+        const id = row.dataset.id;
+        console.log(row);
+        console.log(row.dataset);
+        console.log(row.dataset.id);
+        if (!id) {
+        console.error("Missing product ID", row);
+        return;
+        }
+        const name = row.querySelector(".edit-name").value.trim();
+        if (name.includes("!")) {
+          row.querySelector(".error").innerText = "\n！は使用できません";
+          return;
+        }
+        const price = Number(row.querySelector(".edit-price").value);
+        const stock = Number(row.querySelector(".edit-stock").value);
+            fetch(`${API}/${id}`, {
+                method: "PUT",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({
+                    name,
+                    price,
+                    stock
+                })
+            })
+            .then(async res => {
+                if (!res.ok) {
+                   const msg = await res.text();
+                   if (res.status === 400) {
+                     throw new Error(msg || "入力エラー");
+                   }
+                   if (res.status === 404) {
+                     throw new Error("IDが見つかりません");
+                   }
+                   throw new Error("更新失敗");
+                }
+                 return res.json();
+              })
+              .then(() => {
+              toggleButtons(row, false);
+              editingRow = null;
+              alert("更新しました");
+              getProducts();
+              })
+              .catch(err => {
+                    alert(err.message);
+              });
+    }
+// DELETE
+    function deleteProduct(btn) {
+        const row = btn.closest("tr");
+        const id = row.dataset.id;
+        if (confirm("削除してもよろしいですか？")) {
+            fetch(API + "/" + id, {
+                method: "DELETE"
+            })
+            .then(res => {
+               if (!res.ok) {
+                    throw new Error("削除に失敗しました。");
+                }
+                return res.text();
+            })
+            .then(() => {
+                alert(`商品ID${id}を削除しました。`);
+                if (editingRow) {
+                editingRow = null;
+                }
+                getProducts();
+            })
+            .catch(err => {
+                alert(err.message);
+            });
+        }
+    }
+//CREATE
+    function showCreateRow() {
+        const tbody = document.getElementById("tbody");
+        const rows = tbody.querySelectorAll("tr");
+        const row = document.createElement("tr");
+        row.id = "create-row";
+        row.innerHTML = `
+            <td></td>
+            <td>
+                <input id="new-name"
+                       placeholder="商品名">
+                <div id="name-error" class="error"></div>
+            </td>
+            <td>
+                <input id="new-price"
+                       placeholder="価格">
+                <div id="price-error" class="error"></div>
+            </td>
+            <td>
+                <input id="new-stock"
+                       placeholder="在庫数">
+                <div id="stock-error" class="error"></div>
+            </td>
+            <td></td>
+            <td></td>
+        `;
+        tbody.appendChild(row);
+        document.getElementById("new-name").focus();
+        row.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                  createProduct();
+            }
+        });
+    }
+    async function createProduct() {
+        const name = document.getElementById("new-name").value.trim();
+        const priceValue = document.getElementById("new-price").value.trim();
+        const price = Number(priceValue);
+        const stockValue = document.getElementById("new-stock").value.trim();
+        const stock = Number(stockValue);
+        document.getElementById("name-error").innerText = "";
+        document.getElementById("price-error").innerText = "";
+        document.getElementById("stock-error").innerText = "";
+        let isValid = true;
+        //NAME
+        if (!name) {
+            document.getElementById("name-error").innerText =
+                "商品名は必須です";
+            isValid = false;
+        } else if (name.length < 2 || name.length > 50) {
+            document.getElementById("name-error").innerText =
+                "商品名は2〜50文字で入力してください";
+            isValid = false;
+        }
+        //PRICE
+        if (!priceValue) {
+            document.getElementById("price-error").innerText =
+                "価格は必須です";
+            isValid = false;
+        } else if (isNaN(price)) {
+            document.getElementById("price-error").innerText =
+                "価格は数字で入力してください";
+            isValid = false;
+        } else if (price < 0 || price > 999999.99) {
+            document.getElementById("price-error").innerText =
+                "価格は0以上999999.99以下で入力してください";
+            isValid = false;
+        }
+        //STOCK
+        if (!stockValue) {
+        document.getElementById("stock-error").innerText =
+            "在庫数は必須です";
+        isValid = false;
+        } else if (!Number.isInteger(stock) || isNaN(stock)) {
+        document.getElementById("stock-error").innerText =
+            "在庫数は整数で入力してください";
+        isValid = false;
+        } else if (stock < 0 || stock > 100000) {
+        document.getElementById("stock-error").innerText =
+            "在庫数は0以上100000以下で入力してください";
+        isValid = false;
+    }
+        if (!isValid) return;
+        const res = await fetch("/products", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name, price, stock })
+        });
+        if (!res.ok) {
+        const error = await res.json();
+        document.getElementById("name-error").innerText = error.name || "";
+        return;
+        }
+        const data = await res.json();
+        addRowToTable(data);
+        document.querySelector("#new-name").value = "";
+        document.querySelector("#new-price").value = "";
+        document.querySelector("#new-stock").value = "";
+        document.getElementById("create-row").remove();
+    }
+function addRowToTable(product) {
+        const tbody = document.getElementById("tbody");
+        const row = document.createElement("tr");
+        row.dataset.id = product.id;
+        row.innerHTML = `
+            <td class="id-cell">${product.id}</td>
+            <td class="name-cell">${product.name}</td>
+            <td class="price-cell">${product.price}</td>
+            <td class="stock-cell">${product.stock}</td>
+            <td>
+            <button onclick="editRow(this)">更新</button>
+            <button onclick="updateProduct(this)" style="display:none;">保存</button>
+            <button onclick="cancelEdit(this)" style="display:none;">キャンセル</button>
+            <button onclick="deleteProduct(this)">削除</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    }
+function editRow(btn) {
+        const row = btn.closest("tr");
+        if (editingRow && editingRow !== row) {
+            alert("他の行を編集中です");
+            return;
+        }
+        editingRow = row;
+        const nameCell = row.querySelector(".name-cell");
+        const priceCell = row.querySelector(".price-cell");
+        const stockCell = row.querySelector(".stock-cell");
+        row.dataset.oldName = nameCell.innerText;
+        row.dataset.oldPrice = priceCell.innerText;
+        row.dataset.oldStock = stockCell.innerText;
+        nameCell.innerHTML = `<input class="edit-name" value="${row.dataset.oldName}">
+        <small class="error" id="errName"></small>
+        `;
+        priceCell.innerHTML = `<input class="edit-price" value="${row.dataset.oldPrice}">
+        <small class="error" id="errPrice"></small>
+        `;
+        stockCell.innerHTML = `<input class="edit-stock" value="${row.dataset.oldStock}">
+        <small class="error" id="errStock"></small>
+        `;
+        toggleButtons(row, true);
+    }
+function cancelEdit(btn) {
+        const row = btn.closest("tr");
+        row.querySelector(".name-cell").innerText = row.dataset.oldName;
+        row.querySelector(".price-cell").innerText = row.dataset.oldPrice;
+        row.querySelector(".stock-cell").innerText = row.dataset.oldStock;
+        toggleButtons(row, false);
+        editingRow = null;
+    }
+function toggleButtons(row, editing) {
+        const btns = row.querySelectorAll("button");
+        // 0: 更新, 1: 保存, 2: キャンセル
+        btns[0].style.display = editing ? "none" : "inline";
+        btns[1].style.display = editing ? "inline" : "none";
+        btns[2].style.display = editing ? "inline" : "none";
+    }
+function clearErrors() {
+        document.querySelectorAll(".error").forEach(e => e.innerText = "");
+}
+function validate(row) {
+        clearErrors();
+        const id = row.dataset.id;
+        const name = row.querySelector(".edit-name").value.trim();
+        const priceInput = row.querySelector(".edit-price");
+        const price = priceInput.value.trim();
+        const stockInput = row.querySelector(".edit-stock");
+        const stock = stockInput.value.trim();
+        const error = stockInput.parentElement.querySelector(".error");
+        const error2 = priceInput.parentElement.querySelector(".error");
+        error.innerText = "";
+        error2.innerText = "";
+        let ok = true;
+    //NAME
+    if (!name) {
+             document.getElementById("errName").innerText = "\n空欄にしないでください";
+            ok = false;
+        } else if (name.length < 2 || name.length > 50) {
+            document.getElementById("errName").innerText = "\n商品名は2〜50文字です";
+            ok = false;
+        }
+    //PRICE
+    if (!price) {
+        error2.innerText = "価格を入力してください";
+        ok = false;
+    } else {
+        const priceNum = Number(price);
+        if (Number.isNaN(priceNum)) {
+            error2.innerText = "数字で入力してください";
+            ok = false;
+        } else if (priceNum < 0 || priceNum > 999999.99) {
+            error2.innerText = "価格は0.0〜999999.99の範囲です";
+            ok = false;
+        }
+    }
+    //STOCK
+        if (!stock) {
+            error.innerText = "在庫数を入力してください";
+            ok = false;
+        } else {
+            const stockNum = Number(stock);
+            if (Number.isNaN(stockNum) || !Number.isInteger(stockNum)) {
+            error.innerText = "整数で入力してください";
+            ok = false;
+            } else if (stockNum < 0 || stockNum > 100000) {
+            error.innerText = "在庫数は0〜100000の範囲です";
+            ok = false;
+            }
+        }
+        return ok;
+    }
+function logout() {
+    fetch("auth/logout", {
+        method: "POST",
+        credentials: "include"
+    }).then(() => {
+        localStorage.removeItem("token");
+        window.location.href = "/login.html";
+    });
+}
+</script>
+</body>
+</html>
