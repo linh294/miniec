@@ -7,7 +7,8 @@ function getApiUrl() {
     }
 
     // Prod: domain thực
-    return "https://api.production.com";
+    // return "https://api.production.com";
+    return "https://miniec-staging.onrender.com";
 }
 
 const API_URL = getApiUrl();
